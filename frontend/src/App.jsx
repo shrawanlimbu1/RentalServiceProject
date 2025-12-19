@@ -10,6 +10,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import MyRentals from "./pages/MyRentals";
 import BikesCatalog from "./pages/BikesCatalog";
+import UserProfile from "./pages/UserProfile";
+import Recommendations from "./pages/Recommendations";
 
 // Main App component - sets up routing and context providers
 
@@ -28,6 +30,8 @@ function App() {
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/my-rentals" element={<MyRentals />} />
         <Route path="/bikes" element={<BikesCatalog />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/recommendations" element={<Recommendations />} />
         </Routes>
         
         <Toaster position="top-right" />

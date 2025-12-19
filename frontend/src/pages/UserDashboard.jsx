@@ -63,7 +63,7 @@ const UserDashboard = () => {
                       <div className="flex items-center mb-3">
                         {rental.bike_image ? (
                           <img 
-                            src={rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
+                            src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
                             alt={rental.bike_name}
                             className="w-16 h-16 rounded-lg object-cover mr-3"
                           />
@@ -75,7 +75,7 @@ const UserDashboard = () => {
                         <div>
                           <h3 className="font-bold text-gray-900">{rental.bike_name}</h3>
                           <p className="text-sm text-gray-600">{rental.bike_type}</p>
-                          <p className="text-sm font-semibold text-blue-600">${rental.bike_price}/hr</p>
+                          <p className="text-sm font-semibold text-blue-600">Rs {rental.bike_price}/hr</p>
                         </div>
                       </div>
                       <div className="text-sm text-gray-600">
@@ -168,7 +168,7 @@ const UserDashboard = () => {
                         <div className="flex items-center">
                           {rental.bike_image ? (
                             <img 
-                              src={rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
+                              src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
                               alt={rental.bike_name}
                               className="w-12 h-12 rounded-lg object-cover mr-3"
                             />
@@ -179,7 +179,7 @@ const UserDashboard = () => {
                           )}
                           <div>
                             <p className="font-semibold text-gray-900">{rental.bike_name}</p>
-                            <p className="text-sm text-gray-500">${rental.bike_price}/hr</p>
+                            <p className="text-sm text-gray-500">Rs {rental.bike_price}/hr</p>
                           </div>
                         </div>
                       </td>

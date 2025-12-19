@@ -20,7 +20,7 @@ const MyRentals = () => {
   const fetchActiveRentals = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/api/rentals/user/${user.id}`);
-      const active = res.data.filter(rental => rental.status === 'confirmed' && !rental.return_date);
+      const active = res.data.filter(rental => (rental.status === 'confirmed' || rental.status === 'pending') && !rental.return_date);
       setActiveRentals(active);
       setLoading(false);
       
@@ -33,6 +33,17 @@ const MyRentals = () => {
     } catch (err) {
       toast.error('Failed to fetch rentals');
       setLoading(false);
+    }
+  };
+
+  const handleCancelRental = async (rentalId) => {
+    try {
+      await axios.put(`http://localhost:5000/api/rentals/${rentalId}/cancel`);
+      toast.success('Rental cancelled successfully');
+      fetchActiveRentals();
+    } catch (err) {
+      console.error('Cancel error:', err);
+      toast.error(err.response?.data?.message || 'Failed to cancel rental');
     }
   };
 
@@ -76,7 +87,7 @@ const MyRentals = () => {
               <div key={rental.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition">
                 {rental.bike_image ? (
                   <img 
-                    src={rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
+                    src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
                     alt={rental.bike_name}
                     className="w-full h-48 object-cover"
                   />
@@ -103,21 +114,45 @@ const MyRentals = () => {
                       <span className="font-semibold">{new Date(rental.rental_date).toLocaleDateString()}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-gray-600">Days:</span>
+                      <span className="font-semibold">{rental.rental_days || 1} day{(rental.rental_days || 1) > 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Price per Hour:</span>
-                      <span className="font-semibold text-green-600">${rental.bike_price}</span>
+                      <span className="font-semibold text-green-600">Rs {rental.bike_price}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Status:</span>
-                      <span className="font-semibold text-green-600">Active</span>
+                      <span className={`font-semibold ${
+                        rental.status === 'pending' ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {rental.status === 'pending' ? 'Pending' : 'Active'}
+                      </span>
                     </div>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <p className="text-sm text-blue-800">
-                        <span className="font-semibold">📍 Remember:</span> Return the bike to the designated location when finished
-                      </p>
-                    </div>
+                    {rental.status === 'pending' ? (
+                      <div className="flex gap-2">
+                        <div className="bg-yellow-50 p-3 rounded-lg flex-1">
+                          <p className="text-sm text-yellow-800">
+                            <span className="font-semibold">⏳ Pending:</span> Waiting for admin approval
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleCancelRental(rental.id)}
+                          className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 text-sm font-semibold transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <span className="font-semibold">📍 Remember:</span> Return the bike to the designated location when finished
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

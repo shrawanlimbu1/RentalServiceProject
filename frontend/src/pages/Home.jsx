@@ -17,7 +17,14 @@ const Home = () => {
   const [filteredBikes, setFilteredBikes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [userRentals, setUserRentals] = useState([]);
+
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedBike, setSelectedBike] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [totalDays, setTotalDays] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
   const bannerImages = [
     'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
     'https://images.unsplash.com/photo-1571068316344-75bc76f77890?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
@@ -26,6 +33,20 @@ const Home = () => {
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % bannerImages.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + bannerImages.length) % bannerImages.length);
+  
+  const openBikeModal = (bike) => {
+    setSelectedBike(bike);
+    setStartDate('');
+    setEndDate('');
+    setTotalDays(0);
+    setTotalPrice(0);
+    setShowModal(true);
+  };
+  
+  const closeBikeModal = () => {
+    setSelectedBike(null);
+    setShowModal(false);
+  };
 
   // useEffect runs once when component mounts (page loads)
   useEffect(() => {
@@ -53,6 +74,8 @@ const Home = () => {
       })
       .catch(err => console.error(err));
   };
+
+
 
   const fetchUserRentals = () => {
     if (user) {
@@ -85,10 +108,34 @@ const Home = () => {
     return rental ? rental.status : null;
   };
 
+  // Calculate days and price when dates change
+  const calculateRental = (start, end, pricePerDay) => {
+    if (start && end) {
+      const startD = new Date(start);
+      const endD = new Date(end);
+      const days = Math.ceil((endD - startD) / (1000 * 60 * 60 * 24)) + 1;
+      if (days > 0) {
+        setTotalDays(days);
+        setTotalPrice(days * pricePerDay);
+      }
+    }
+  };
+
   // Function to handle rental request
   const handleRentRequest = async (bikeId) => {
     if (!user) {
       toast.error('Please login to rent a bike');
+      return;
+    }
+
+    if (!user.license_number) {
+      toast.error('Please add your license number in profile to book a bike');
+      navigate('/profile');
+      return;
+    }
+
+    if (!startDate || !endDate) {
+      toast.error('Please select start and end dates');
       return;
     }
 
@@ -102,7 +149,10 @@ const Home = () => {
     try {
       await axios.post('http://localhost:5000/api/rentals', {
         user_id: user.id,
-        bike_id: bikeId
+        bike_id: bikeId,
+        start_date: startDate,
+        end_date: endDate,
+        total_price: totalPrice
       });
       toast.success('Bike booked! Waiting for admin confirmation.');
       
@@ -117,7 +167,7 @@ const Home = () => {
         }
       }, 1500);
     } catch (err) {
-      toast.error('Failed to send rental request');
+      toast.error(err.response?.data || 'Failed to send rental request');
     }
   };
 
@@ -255,12 +305,14 @@ const Home = () => {
           </div>
         </div>
 
+
+
         {/* Grid layout for bike cards - responsive (1 col on mobile, 2 on tablet, 3 on desktop) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           
           {/* Loop through filtered bikes and create a card */}
           {filteredBikes.map((bike) => (
-            <div key={bike.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+            <div key={bike.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden cursor-pointer" onClick={() => openBikeModal(bike)}>
               
               {/* Bike image section - show image if available, otherwise show bike emoji */}
               {bike.image_url ? (
@@ -319,7 +371,7 @@ const Home = () => {
                 {/* Price and action section */}
                 <div className="flex justify-between items-center pt-4 border-t">
                   {/* Price display */}
-                  <span className="text-2xl font-bold text-gray-900">${bike.price_per_hour}<span className="text-sm text-gray-500">/hr</span></span>
+                  <span className="text-2xl font-bold text-gray-900">Rs {bike.price_per_hour}<span className="text-sm text-gray-500">/day</span></span>
                   
                   {/* Show different content based on user role and login status */}
                   {user && user.role !== 'admin' ? (
@@ -343,7 +395,10 @@ const Home = () => {
                       if (bike.available) {
                         return (
                           <button 
-                            onClick={() => handleRentRequest(bike.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openBikeModal(bike);
+                            }}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold transition"
                           >
                             Book Now
@@ -397,7 +452,7 @@ const Home = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {/* Off-Road Category */}
             <div 
-              onClick={() => navigate('/bikes?category=off-road')}
+              onClick={() => navigate('/bikes?category=Off-Road')}
               className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 p-6 text-center"
             >
               <div className="text-4xl mb-3">🏔️</div>
@@ -447,6 +502,183 @@ const Home = () => {
           </div>
         </div>
       </div>
+      
+      {/* Bike Details Modal */}
+      {showModal && selectedBike && (
+        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="relative">
+              {/* Close button */}
+              <button 
+                onClick={closeBikeModal}
+                className="absolute top-4 right-4 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-600 hover:text-gray-800 w-8 h-8 rounded-full flex items-center justify-center transition z-10"
+              >
+                ×
+              </button>
+              
+              {/* Bike image */}
+              {selectedBike.image_url ? (
+                <img 
+                  src={selectedBike.image_url.startsWith('data:') || selectedBike.image_url.startsWith('http') ? selectedBike.image_url : `http://localhost:5000${selectedBike.image_url}`} 
+                  alt={selectedBike.name} 
+                  className="w-full h-64 object-cover rounded-t-2xl" 
+                />
+              ) : (
+                <div className="w-full h-64 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center rounded-t-2xl">
+                  <span className="text-8xl">🚴</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6">
+              {/* Bike name and status */}
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-3xl font-bold text-gray-900">{selectedBike.name}</h2>
+                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                  (() => {
+                    const userStatus = getUserRentalStatus(selectedBike.id);
+                    if (userStatus === 'pending') return 'bg-yellow-100 text-yellow-700';
+                    if (userStatus === 'confirmed') return 'bg-blue-100 text-blue-700';
+                    if (!selectedBike.available) return 'bg-red-100 text-red-700';
+                    return 'bg-green-100 text-green-700';
+                  })()
+                }`}>
+                  {(() => {
+                    const userStatus = getUserRentalStatus(selectedBike.id);
+                    if (userStatus === 'pending') return 'Pending';
+                    if (userStatus === 'confirmed') return 'My Rental';
+                    if (!selectedBike.available) return 'Rented';
+                    return 'Available';
+                  })()}
+                </span>
+              </div>
+              
+              {/* Bike types */}
+              <div className="mb-4">
+                {selectedBike.type && selectedBike.type.includes(', ') ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedBike.type.split(', ').map(type => (
+                      <span key={type} className="px-3 py-1 bg-blue-100 text-blue-600 text-sm font-semibold rounded-full">{type}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="px-3 py-1 bg-blue-100 text-blue-600 text-sm font-semibold rounded-full">{selectedBike.type}</span>
+                )}
+              </div>
+              
+              {/* Price */}
+              <div className="mb-6">
+                <span className="text-4xl font-bold text-gray-900">Rs {selectedBike.price_per_hour}</span>
+                <span className="text-lg text-gray-500 ml-2">/day</span>
+              </div>
+              
+              {/* Date Selection */}
+              <div className="mb-6">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <input
+                      type="date"
+                      min={new Date().toISOString().split('T')[0]}
+                      value={startDate}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        calculateRental(e.target.value, endDate, selectedBike.price_per_hour);
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <input
+                      type="date"
+                      min={startDate || new Date().toISOString().split('T')[0]}
+                      value={endDate}
+                      onChange={(e) => {
+                        setEndDate(e.target.value);
+                        calculateRental(startDate, e.target.value, selectedBike.price_per_hour);
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                {totalDays > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-gray-700">Duration:</span>
+                      <span className="font-semibold">{totalDays} day{totalDays > 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-bold border-t pt-2">
+                      <span>Total Price:</span>
+                      <span className="text-green-600">Rs {totalPrice}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Description */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+                <p className="text-gray-600 leading-relaxed">{selectedBike.description || 'No description available.'}</p>
+              </div>
+              
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                {user && user.role !== 'admin' ? (
+                  (() => {
+                    const userStatus = getUserRentalStatus(selectedBike.id);
+                    if (userStatus === 'pending') {
+                      return (
+                        <span className="flex-1 px-6 py-3 rounded-lg text-center font-semibold bg-yellow-100 text-yellow-700">
+                          ⏳ Pending Approval
+                        </span>
+                      );
+                    }
+                    if (userStatus === 'confirmed') {
+                      return (
+                        <span className="flex-1 px-6 py-3 rounded-lg text-center font-semibold bg-blue-100 text-blue-700">
+                          🚴 Your Rental
+                        </span>
+                      );
+                    }
+                    if (selectedBike.available) {
+                      return (
+                        <button 
+                          onClick={() => {
+                            handleRentRequest(selectedBike.id);
+                            closeBikeModal();
+                          }}
+                          disabled={!startDate || !endDate || totalDays <= 0}
+                          className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {totalDays > 0 ? `Book for Rs ${totalPrice}` : 'Select Dates'}
+                        </button>
+                      );
+                    }
+                    return (
+                      <span className="flex-1 px-6 py-3 rounded-lg text-center font-semibold bg-red-100 text-red-700">
+                        ✗ Not Available
+                      </span>
+                    );
+                  })()
+                ) : (
+                  <span className={`flex-1 px-6 py-3 rounded-lg text-center font-semibold ${
+                    selectedBike.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {selectedBike.available ? '✓ Available' : '✗ Not Available'}
+                  </span>
+                )}
+                <button 
+                  onClick={closeBikeModal}
+                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

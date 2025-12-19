@@ -1,6 +1,6 @@
 // Importing React hooks and routing components
 import { useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 // Navbar component - responsive navigation bar for the entire app
@@ -11,6 +11,7 @@ export default function Navbar() {
   // Get current user and logout function from AuthContext
   const authContext = useContext(AuthContext);
   const { user, logout } = authContext || { user: null, logout: () => {} };
+  const location = useLocation();
 
   return (
     // Main navigation container with gradient background and glass effect
@@ -35,12 +36,16 @@ export default function Navbar() {
 
         {/* Desktop navigation menu - hidden on mobile devices */}
         <div className="hidden md:flex gap-2 text-lg items-center">
-          <Link to="/" className="px-4 py-2 rounded-xl hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg">
+          <Link to="/" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+            location.pathname === '/' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+          }`}>
             🏠 Home
           </Link>
           {/* Only show About for non-admin users */}
           {(!user || user.role !== 'admin') && (
-            <Link to="/about" className="px-4 py-2 rounded-xl hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <Link to="/about" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+              location.pathname === '/about' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+            }`}>
               ℹ️ About
             </Link>
           )}
@@ -50,16 +55,32 @@ export default function Navbar() {
             <>
               {/* Show admin link only if user is admin */}
               {user.role === 'admin' ? (
-                <Link to="/admin" className="px-4 py-2 rounded-xl hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <Link to="/admin" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                  location.pathname === '/admin' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+                }`}>
                   🔧 Admin Dashboard
                 </Link>
               ) : (
                 <>
-                  <Link to="/dashboard" className="px-4 py-2 rounded-xl hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                  <Link to="/dashboard" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    location.pathname === '/dashboard' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+                  }`}>
                     📊 Dashboard
                   </Link>
-                  <Link to="/my-rentals" className="px-4 py-2 rounded-xl hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                  <Link to="/recommendations" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    location.pathname === '/recommendations' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+                  }`}>
+                    🎯 Recommendations
+                  </Link>
+                  <Link to="/my-rentals" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    location.pathname === '/my-rentals' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+                  }`}>
                     🚴 My Rentals
+                  </Link>
+                  <Link to="/profile" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    location.pathname === '/profile' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+                  }`}>
+                    👤 Profile
                   </Link>
                 </>
               )}
@@ -75,10 +96,14 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login" className="px-4 py-2 rounded-xl hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
+              <Link to="/login" className={`px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
+                location.pathname === '/login' ? 'bg-white/30 text-yellow-200 shadow-lg' : 'hover:bg-white/20'
+              }`}>
                 🔑 Login
               </Link>
-              <Link to="/register" className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-2 rounded-xl font-bold hover:from-yellow-500 hover:to-orange-600 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+              <Link to="/register" className={`px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ${
+                location.pathname === '/register' ? 'bg-yellow-300 text-gray-900' : 'bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 hover:from-yellow-500 hover:to-orange-600'
+              }`}>
                 ✨ Register
               </Link>
             </>
@@ -102,12 +127,16 @@ export default function Navbar() {
       <div className={`md:hidden overflow-hidden transition-all duration-500 ease-in-out ${open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="bg-gradient-to-b from-black/20 to-black/40 backdrop-blur-xl border-t border-white/20 flex flex-col gap-3 px-6 py-6">
           {/* Each link closes the mobile menu when clicked */}
-          <Link to="/" onClick={() => setOpen(false)} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/20 transition-all duration-300 hover:scale-105">
+          <Link to="/" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+            location.pathname === '/' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+          }`}>
             <span>🏠</span><span>Home</span>
           </Link>
           {/* Only show About for non-admin users */}
           {(!user || user.role !== 'admin') && (
-            <Link to="/about" onClick={() => setOpen(false)} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/20 transition-all duration-300 hover:scale-105">
+            <Link to="/about" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+              location.pathname === '/about' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+            }`}>
               <span>ℹ️</span><span>About</span>
             </Link>
           )}
@@ -117,16 +146,32 @@ export default function Navbar() {
             <>
               {/* Show admin link only if user is admin */}
               {user.role === 'admin' ? (
-                <Link to="/admin" onClick={() => setOpen(false)} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/20 transition-all duration-300 hover:scale-105">
+                <Link to="/admin" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                  location.pathname === '/admin' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+                }`}>
                   <span>🔧</span><span>Admin Dashboard</span>
                 </Link>
               ) : (
                 <>
-                  <Link to="/dashboard" onClick={() => setOpen(false)} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/20 transition-all duration-300 hover:scale-105">
+                  <Link to="/dashboard" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                    location.pathname === '/dashboard' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+                  }`}>
                     <span>📊</span><span>Dashboard</span>
                   </Link>
-                  <Link to="/my-rentals" onClick={() => setOpen(false)} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/20 transition-all duration-300 hover:scale-105">
+                  <Link to="/recommendations" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                    location.pathname === '/recommendations' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+                  }`}>
+                    <span>🎯</span><span>Recommendations</span>
+                  </Link>
+                  <Link to="/my-rentals" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                    location.pathname === '/my-rentals' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+                  }`}>
                     <span>🚴</span><span>My Rentals</span>
+                  </Link>
+                  <Link to="/profile" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                    location.pathname === '/profile' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+                  }`}>
+                    <span>👤</span><span>Profile</span>
                   </Link>
                 </>
               )}
@@ -139,10 +184,14 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login" onClick={() => setOpen(false)} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-white/20 transition-all duration-300 hover:scale-105">
+              <Link to="/login" onClick={() => setOpen(false)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                location.pathname === '/login' ? 'bg-white/30 text-yellow-200' : 'hover:bg-white/20'
+              }`}>
                 <span>🔑</span><span>Login</span>
               </Link>
-              <Link to="/register" onClick={() => setOpen(false)} className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 p-3 rounded-xl font-bold hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2">
+              <Link to="/register" onClick={() => setOpen(false)} className={`p-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 ${
+                location.pathname === '/register' ? 'bg-yellow-300 text-gray-900' : 'bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 hover:from-yellow-500 hover:to-orange-600'
+              }`}>
                 <span>✨</span><span>Register</span>
               </Link>
             </>

@@ -274,14 +274,13 @@ const AdminDashboard = () => {
 
   // Function to delete a bike
   const handleDelete = async (id) => {
-    // Ask user for confirmation before deleting
     if (window.confirm('Are you sure you want to delete this bike?')) {
       try {
         await axios.delete(`http://localhost:5000/api/bikes/${id}`);
         toast.success('Bike deleted successfully');
-        fetchBikes(); // Refresh bike list after deletion
+        fetchBikes();
       } catch (err) {
-        toast.error('Failed to delete bike');
+        toast.error(err.response?.data?.message || 'Failed to delete bike');
       }
     }
   };
@@ -410,7 +409,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Price per Hour ($)</label>
+                <label className="block text-gray-700 font-semibold mb-2">Price per Hour (Rs)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -520,7 +519,7 @@ const AdminDashboard = () => {
                       bike.type
                     )}
                   </td>
-                  <td className="px-6 py-4 text-gray-900 font-bold">${bike.price_per_hour}</td>
+                  <td className="px-6 py-4 text-gray-900 font-bold">Rs {bike.price_per_hour}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       bike.available && !bike.is_booked ? 'bg-green-100 text-green-700' :
@@ -565,8 +564,10 @@ const AdminDashboard = () => {
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Customer</th>
+                      <th className="px-6 py-4 text-left text-gray-700 font-bold">License</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Bike</th>
-                      <th className="px-6 py-4 text-left text-gray-700 font-bold">Request Date</th>
+                      <th className="px-6 py-4 text-left text-gray-700 font-bold">Rental Period</th>
+                      <th className="px-6 py-4 text-left text-gray-700 font-bold">Total Price</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Actions</th>
                     </tr>
                   </thead>
@@ -584,22 +585,51 @@ const AdminDashboard = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
+                          {rental.license_number ? (
+                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
+                              {rental.license_number}
+                            </span>
+                          ) : (
+                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">
+                              No License
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="flex items-center">
                             {rental.bike_image && (
                               <img 
-                                src={rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
+                                src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
                                 alt={rental.bike_name}
                                 className="w-12 h-12 rounded-lg object-cover mr-3"
                               />
                             )}
                             <div>
                               <p className="font-semibold text-gray-900">{rental.bike_name}</p>
-                              <p className="text-sm text-gray-500">{rental.bike_type} - ${rental.bike_price}/hr</p>
+                              <p className="text-sm text-gray-500">{rental.bike_type} - Rs {rental.bike_price}/day</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-600">
-                          {new Date(rental.rental_date).toLocaleDateString()}
+                          {rental.start_date && rental.end_date ? (
+                            <div>
+                              <div className="text-sm font-semibold">
+                                {new Date(rental.start_date).toLocaleDateString()} - {new Date(rental.end_date).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {Math.ceil((new Date(rental.end_date) - new Date(rental.start_date)) / (1000 * 60 * 60 * 24)) + 1} days
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">No dates set</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {rental.total_price ? (
+                            <span className="font-semibold text-green-600">Rs {rental.total_price}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex space-x-2">
@@ -644,7 +674,8 @@ const AdminDashboard = () => {
                     <tr>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Customer</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Bike</th>
-                      <th className="px-6 py-4 text-left text-gray-700 font-bold">Rental Date</th>
+                      <th className="px-6 py-4 text-left text-gray-700 font-bold">Rental Period</th>
+                      <th className="px-6 py-4 text-left text-gray-700 font-bold">Total Price</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Actions</th>
                     </tr>
                   </thead>
@@ -665,19 +696,37 @@ const AdminDashboard = () => {
                           <div className="flex items-center">
                             {rental.bike_image && (
                               <img 
-                                src={rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
+                                src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
                                 alt={rental.bike_name}
                                 className="w-12 h-12 rounded-lg object-cover mr-3"
                               />
                             )}
                             <div>
                               <p className="font-semibold text-gray-900">{rental.bike_name}</p>
-                              <p className="text-sm text-gray-500">{rental.bike_type} - ${rental.bike_price}/hr</p>
+                              <p className="text-sm text-gray-500">{rental.bike_type} - Rs {rental.bike_price}/day</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-600">
-                          {new Date(rental.rental_date).toLocaleDateString()}
+                          {rental.start_date && rental.end_date ? (
+                            <div>
+                              <div className="text-sm font-semibold">
+                                {new Date(rental.start_date).toLocaleDateString()} - {new Date(rental.end_date).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {Math.ceil((new Date(rental.end_date) - new Date(rental.start_date)) / (1000 * 60 * 60 * 24)) + 1} days
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">No dates set</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {rental.total_price ? (
+                            <span className="font-semibold text-green-600">Rs {rental.total_price}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <button
@@ -714,6 +763,7 @@ const AdminDashboard = () => {
                     <tr>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Name</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Email</th>
+                      <th className="px-6 py-4 text-left text-gray-700 font-bold">License</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Role</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Joined</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Total Rentals</th>
@@ -736,6 +786,18 @@ const AdminDashboard = () => {
                         </td>
                         {/* User email */}
                         <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                        {/* User license */}
+                        <td className="px-6 py-4 text-gray-600">
+                          {user.license_number ? (
+                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
+                              {user.license_number}
+                            </span>
+                          ) : (
+                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">
+                              No License
+                            </span>
+                          )}
+                        </td>
                         {/* User role with color coding */}
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -816,7 +878,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center">
                               {rental.bike_image && (
                                 <img 
-                                  src={rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
+                                  src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
                                   alt={rental.bike_name}
                                   className="w-12 h-12 rounded-lg object-cover mr-3"
                                 />

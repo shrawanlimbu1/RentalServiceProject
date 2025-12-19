@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.js";
 import bikeRoutes from "./routes/bikes.js";
 import userRoutes from "./routes/users.js";
 import rentalRoutes from "./routes/rentals.js";
+import recommendationRoutes from "./routes/recommendations.js";
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/bikes", bikeRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rentals", rentalRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 
 // Port
 const PORT = process.env.PORT || 5000;
