@@ -11,7 +11,7 @@ const Register = () => {
     e.preventDefault();
     try {
       await axios.post('http://localhost:5000/api/auth/signup', formData);
-      toast.success('Registration successful! Please login.');
+      toast.success('Account created! Please login.');
       navigate('/login');
     } catch (err) {
       toast.error(err.response?.data || 'Registration failed');
@@ -19,65 +19,57 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-teal-100 px-4">
-      <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-xl border border-gray-200">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
-          <p className="text-gray-600">Join us today!</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="bg-white w-full max-w-sm p-8 rounded-lg border border-gray-200 shadow-sm">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">Create account</h2>
+        <p className="text-sm text-gray-500 mb-6">Join VehicleRental today</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <input
               type="text"
               placeholder="John Doe"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
               required
             />
           </div>
-          
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               placeholder="you@example.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
               required
             />
           </div>
-          
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               type="password"
               placeholder="••••••••"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
               required
             />
           </div>
-          
-          <button type="submit" className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg hover:from-green-700 hover:to-teal-700 font-bold text-lg shadow-lg hover:shadow-xl transition-all">
+          <button
+            type="submit"
+            className="w-full py-2 bg-gray-900 text-white rounded font-medium hover:bg-gray-700 transition-colors"
+          >
             Create Account
           </button>
         </form>
-        
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account? <Link to="/login" className="text-green-600 font-semibold hover:text-green-700 transition">Login</Link>
-          </p>
-        </div>
+
+        <p className="mt-5 text-sm text-center text-gray-500">
+          Already have an account?{' '}
+          <Link to="/login" className="text-gray-900 font-medium hover:underline">Sign in</Link>
+        </p>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ const AdminDashboard = () => {
   
   // State to store active rentals
   const [activeRentals, setActiveRentals] = useState([]);
+  const [allRentals, setAllRentals] = useState([]);
   
   // State to store users list
   const [users, setUsers] = useState([]);
@@ -69,25 +70,21 @@ const AdminDashboard = () => {
     }
   };
 
-  // Function to get active rentals
   const fetchActiveRentals = async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/rentals');
+      setAllRentals(res.data);
       setActiveRentals(res.data.filter(rental => rental.status === 'confirmed' && !rental.return_date));
     } catch (err) {
       toast.error('Failed to fetch active rentals');
     }
   };
 
-  // Function to get all users
   const fetchUsers = async () => {
     try {
-      console.log('Fetching users...');
       const res = await axios.get('http://localhost:5000/api/users');
-      console.log('Users fetched:', res.data);
       setUsers(res.data);
     } catch (err) {
-      console.error('Error fetching users:', err);
       toast.error('Failed to fetch users: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -209,22 +206,11 @@ const AdminDashboard = () => {
     }
   };
 
-  // Function to show user details
-  const showUserDetails = async (userId, userName, userEmail) => {
-    try {
-      // Get all rentals and filter by user_id
-      const res = await axios.get('http://localhost:5000/api/rentals');
-      const userRentals = res.data.filter(rental => rental.user_id === userId);
-      setSelectedUser({
-        id: userId,
-        name: userName,
-        email: userEmail,
-        rentals: userRentals
-      });
-      setShowUserModal(true);
-    } catch (err) {
-      toast.error('Failed to fetch user details');
-    }
+  const showUserDetails = (userId, userName, userEmail) => {
+    const foundUser = users.find(u => u.id === userId) || { id: userId, full_name: userName, email: userEmail };
+    const userRentals = allRentals.filter(r => r.user_id === userId);
+    setSelectedUser({ ...foundUser, rentals: userRentals });
+    setShowUserModal(true);
   };
 
   // Function to handle form submission (add or update bike)
@@ -311,14 +297,14 @@ const AdminDashboard = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">Manage your bike inventory and rentals</p>
+            <p className="text-gray-600 mt-1">Manage your vehicle inventory and rentals</p>
           </div>
           {activeTab === 'bikes' && (
             <button
               onClick={() => setShowForm(!showForm)}
               className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-semibold shadow-md transition"
             >
-              {showForm ? 'Cancel' : '+ Add New Bike'}
+              {showForm ? 'Cancel' : '+ Add New Vehicle'}
             </button>
           )}
         </div>
@@ -332,7 +318,7 @@ const AdminDashboard = () => {
               activeTab === 'bikes' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
-            🚴 Bikes ({bikes.length})
+            Vehicles ({bikes.length})
           </button>
           {/* Pending rentals tab - Approve/reject booking requests */}
           <button
@@ -341,7 +327,7 @@ const AdminDashboard = () => {
               activeTab === 'rentals' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
-            📋 Pending Rentals ({pendingRentals.length})
+            Pending Rentals ({pendingRentals.length})
             {/* Red notification badge when there are pending requests */}
             {pendingRentals.length > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
@@ -356,7 +342,7 @@ const AdminDashboard = () => {
               activeTab === 'active' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
-            🔄 Active Rentals ({activeRentals.length})
+            Active Rentals ({activeRentals.length})
           </button>
           {/* Users tab - View all users and admins */}
           <button
@@ -365,17 +351,17 @@ const AdminDashboard = () => {
               activeTab === 'users' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
-            👥 Users ({users.length})
+            Users ({users.length})
           </button>
         </div>
 
         {/* Bike Add/Edit Form - Only shown when showForm is true and on bikes tab */}
         {activeTab === 'bikes' && showForm && (
           <div className="bg-white p-8 rounded-xl shadow-lg mb-8 border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">{editingBike ? 'Edit Bike' : 'Add New Bike'}</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">{editingBike ? 'Edit Vehicle' : 'Add New Vehicle'}</h2>
             <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Bike Name</label>
+                <label className="block text-gray-700 font-semibold mb-2">Vehicle Name</label>
                 <input
                   type="text"
                   placeholder="Mountain Pro X1"
@@ -421,7 +407,7 @@ const AdminDashboard = () => {
                 />
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Upload Bike Image</label>
+                <label className="block text-gray-700 font-semibold mb-2">Upload Vehicle Image</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -468,7 +454,7 @@ const AdminDashboard = () => {
               <div className="col-span-2">
                 <label className="block text-gray-700 font-semibold mb-2">Description</label>
                 <textarea
-                  placeholder="Describe the bike features..."
+                  placeholder="Describe the vehicle features..."
                   value={formData.description || ''}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
@@ -485,7 +471,7 @@ const AdminDashboard = () => {
                 <span className="text-gray-700 font-semibold">Available for Rent</span>
               </label>
               <button type="submit" className="col-span-2 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-bold shadow-lg transition">
-                {editingBike ? 'Update Bike' : 'Add Bike'}
+                {editingBike ? 'Update Vehicle' : 'Add Vehicle'}
               </button>
             </form>
           </div>
@@ -541,7 +527,7 @@ const AdminDashboard = () => {
           </table>
           {bikes.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No bikes added yet. Add your first bike!</p>
+              <p className="text-gray-500 text-lg">No vehicles added yet. Add your first vehicle!</p>
             </div>
           )}
           </div>
@@ -555,7 +541,6 @@ const AdminDashboard = () => {
             </div>
             {pendingRentals.length === 0 ? (
               <div className="text-center py-12">
-                <span className="text-6xl mb-4 block">📋</span>
                 <p className="text-gray-500 text-lg">No pending rental requests</p>
               </div>
             ) : (
@@ -664,7 +649,6 @@ const AdminDashboard = () => {
             </div>
             {activeRentals.length === 0 ? (
               <div className="text-center py-12">
-                <span className="text-6xl mb-4 block">🚴</span>
                 <p className="text-gray-500 text-lg">No active rentals</p>
               </div>
             ) : (
@@ -733,7 +717,7 @@ const AdminDashboard = () => {
                             onClick={() => handleReturnBike(rental.id)}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold transition"
                           >
-                            🔄 Mark Returned
+                            Mark Returned
                           </button>
                         </td>
                       </tr>
@@ -753,7 +737,6 @@ const AdminDashboard = () => {
             </div>
             {users.length === 0 ? (
               <div className="text-center py-12">
-                <span className="text-6xl mb-4 block">👥</span>
                 <p className="text-gray-500 text-lg">No users found</p>
               </div>
             ) : (
@@ -767,6 +750,7 @@ const AdminDashboard = () => {
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Role</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Joined</th>
                       <th className="px-6 py-4 text-left text-gray-700 font-bold">Total Rentals</th>
+                      <th className="px-6 py-4 text-left text-gray-700 font-bold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -803,7 +787,7 @@ const AdminDashboard = () => {
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                           }`}>
-                            {user.role === 'admin' ? '👑 Admin' : '👤 User'}
+                            {user.role === 'admin' ? 'Admin' : 'User'}
                           </span>
                         </td>
                         {/* Registration date */}
@@ -816,6 +800,14 @@ const AdminDashboard = () => {
                             {user.rental_count || 0}
                           </span>
                         </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => showUserDetails(user.id, user.full_name, user.email)}
+                            className="text-blue-600 hover:text-blue-800 font-semibold transition"
+                          >
+                            Show Details
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -825,85 +817,84 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* User Details Modal */}
         {showUserModal && selectedUser && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Customer Details</h2>
-                <button 
-                  onClick={() => setShowUserModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                >
-                  ×
-                </button>
+                <h2 className="text-xl font-bold text-gray-900">Customer Details</h2>
+                <button onClick={() => setShowUserModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
               </div>
-              
-              <div className="p-6">
-                {/* User Info */}
-                <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">👤 Customer Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Full Name</p>
-                      <p className="font-semibold text-gray-900">{selectedUser.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-semibold text-gray-900">{selectedUser.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Total Rentals</p>
-                      <p className="font-semibold text-gray-900">{selectedUser.rentals.length}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Active Rentals</p>
-                      <p className="font-semibold text-green-600">
-                        {selectedUser.rentals.filter(r => r.status === 'confirmed' && !r.return_date).length}
-                      </p>
-                    </div>
+
+              <div className="p-6 space-y-5">
+                {/* Basic info */}
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+                  <div>
+                    <p className="text-xs text-gray-400">Full Name</p>
+                    <p className="text-sm font-medium text-gray-900">{selectedUser.full_name || selectedUser.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Email</p>
+                    <p className="text-sm font-medium text-gray-900">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">License Number</p>
+                    {selectedUser.license_number ? (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">{selectedUser.license_number}</span>
+                    ) : (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-medium">No License</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Total Rentals</p>
+                    <p className="text-sm font-medium text-gray-900">{selectedUser.rentals?.length || 0}</p>
                   </div>
                 </div>
 
-                {/* Rental History */}
+                {/* License photo */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">🚴 Rental History</h3>
-                  {selectedUser.rentals.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No rental history</p>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">License Photo</p>
+                  {selectedUser.license_photo ? (
+                    <img
+                      src={selectedUser.license_photo}
+                      alt="License"
+                      className="h-36 rounded-lg border border-gray-200 object-cover"
+                    />
                   ) : (
-                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                    <div className="h-20 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center">
+                      <p className="text-sm text-gray-400">No license photo uploaded</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rental history */}
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-3">Rental History</p>
+                  {!selectedUser.rentals?.length ? (
+                    <p className="text-sm text-gray-400 text-center py-6">No rental history</p>
+                  ) : (
+                    <div className="space-y-2 max-h-56 overflow-y-auto">
                       {selectedUser.rentals.map((rental) => (
-                        <div key={rental.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center">
-                              {rental.bike_image && (
-                                <img 
-                                  src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
-                                  alt={rental.bike_name}
-                                  className="w-12 h-12 rounded-lg object-cover mr-3"
-                                />
-                              )}
-                              <div>
-                                <p className="font-semibold text-gray-900">{rental.bike_name}</p>
-                                <p className="text-sm text-gray-500">{rental.bike_type}</p>
-                              </div>
-                            </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              rental.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                              rental.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
-                              {rental.status === 'confirmed' ? '✅ Confirmed' :
-                               rental.status === 'pending' ? '⏳ Pending' :
-                               '❌ Rejected'}
-                            </span>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-600">
-                            <p><span className="font-semibold">Rental Date:</span> {new Date(rental.rental_date).toLocaleDateString()}</p>
-                            {rental.return_date && (
-                              <p><span className="font-semibold">Return Date:</span> {new Date(rental.return_date).toLocaleDateString()}</p>
+                        <div key={rental.id} className="flex justify-between items-center border border-gray-100 rounded-lg p-3">
+                          <div className="flex items-center gap-3">
+                            {rental.bike_image && (
+                              <img
+                                src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
+                                alt={rental.bike_name}
+                                className="w-10 h-10 rounded object-cover"
+                              />
                             )}
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{rental.bike_name}</p>
+                              <p className="text-xs text-gray-400">{new Date(rental.rental_date).toLocaleDateString()}</p>
+                            </div>
                           </div>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            rental.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                            rental.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {rental.status}
+                          </span>
                         </div>
                       ))}
                     </div>

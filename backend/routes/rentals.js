@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllRentals, confirmRental, createRental, returnBike, getUserRentals, cancelRental } from "../controllers/rentalController.js";
+import { getAllRentals, confirmRental, rejectRental, createRental, returnBike, getUserRentals, cancelRental } from "../controllers/rentalController.js";
 
 const router = express.Router();
 
@@ -8,6 +8,9 @@ router.get("/", getAllRentals);
 
 // PUT /api/rentals/:id/confirm - Confirm rental (admin only)
 router.put("/:id/confirm", confirmRental);
+
+// PUT /api/rentals/:id/reject - Reject rental (admin only)
+router.put("/:id/reject", rejectRental);
 
 // POST /api/rentals - Create new rental
 router.post("/", createRental);

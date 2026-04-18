@@ -12,24 +12,16 @@ const MyRentals = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      fetchActiveRentals();
-    }
+    if (user) fetchActiveRentals();
   }, [user]);
 
   const fetchActiveRentals = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/api/rentals/user/${user.id}`);
-      const active = res.data.filter(rental => (rental.status === 'confirmed' || rental.status === 'pending') && !rental.return_date);
+      const active = res.data.filter(r => (r.status === 'confirmed' || r.status === 'pending') && !r.return_date);
       setActiveRentals(active);
       setLoading(false);
-      
-      // Redirect to home if no active rentals
-      if (active.length === 0) {
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
-      }
+      if (active.length === 0) setTimeout(() => navigate('/'), 2000);
     } catch (err) {
       toast.error('Failed to fetch rentals');
       setLoading(false);
@@ -39,10 +31,9 @@ const MyRentals = () => {
   const handleCancelRental = async (rentalId) => {
     try {
       await axios.put(`http://localhost:5000/api/rentals/${rentalId}/cancel`);
-      toast.success('Rental cancelled successfully');
+      toast.success('Rental cancelled');
       fetchActiveRentals();
     } catch (err) {
-      console.error('Cancel error:', err);
       toast.error(err.response?.data?.message || 'Failed to cancel rental');
     }
   };
@@ -50,110 +41,81 @@ const MyRentals = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xl text-gray-500">Please login to view your rentals</p>
+        <p className="text-gray-500">Please login to view your rentals</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">My Rented Bikes</h1>
-          <p className="text-gray-600 mt-1">Bikes you currently have rented</p>
+          <h1 className="text-2xl font-bold text-gray-900">My Rented Bikes</h1>
+          <p className="text-sm text-gray-500 mt-1">Bikes you currently have rented or pending</p>
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your rentals...</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+            <p className="text-sm text-gray-500">Loading your rentals...</p>
           </div>
         ) : activeRentals.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <span className="text-6xl mb-4 block">🚴</span>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Active Rentals</h2>
-            <p className="text-gray-600 mb-4">You don't have any bikes rented at the moment</p>
-            <p className="text-sm text-gray-500 mb-6">Redirecting to browse bikes in 2 seconds...</p>
-            <button 
-              onClick={() => navigate('/')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold transition"
-            >
-              Browse Bikes Now
+          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">No Active Rentals</h2>
+            <p className="text-sm text-gray-500 mb-1">You don't have any bikes rented right now.</p>
+            <p className="text-xs text-gray-400 mb-5">Redirecting to browse bikes in 2 seconds...</p>
+            <button onClick={() => navigate('/')} className="px-4 py-2 bg-gray-900 text-white text-sm rounded hover:bg-gray-700 transition-colors">
+              Browse Bikes
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {activeRentals.map((rental) => (
-              <div key={rental.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition">
+              <div key={rental.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 {rental.bike_image ? (
-                  <img 
+                  <img
                     src={rental.bike_image.startsWith('data:') || rental.bike_image.startsWith('http') ? rental.bike_image : `http://localhost:5000${rental.bike_image}`}
                     alt={rental.bike_name}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-40 object-cover"
                   />
                 ) : (
-                  <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                    <span className="text-6xl">🚴</span>
-                  </div>
+                  <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">No image</div>
                 )}
-                
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-gray-900">{rental.bike_name}</h3>
-                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                      🚴 Rented
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-gray-900">{rental.bike_name}</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${rental.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                      {rental.status === 'pending' ? 'Pending' : 'Active'}
                     </span>
                   </div>
-                  
-                  <p className="text-blue-600 font-semibold mb-2">{rental.bike_type}</p>
-                  <p className="text-gray-600 mb-4">{rental.bike_description}</p>
-                  
-                  <div className="space-y-2 text-sm">
+                  <p className="text-sm text-gray-500 mb-3">{rental.bike_type}</p>
+                  <div className="text-sm text-gray-600 space-y-1 mb-4">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Rental Date:</span>
-                      <span className="font-semibold">{new Date(rental.rental_date).toLocaleDateString()}</span>
+                      <span>Rental Date</span>
+                      <span className="font-medium">{new Date(rental.rental_date).toLocaleDateString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Days:</span>
-                      <span className="font-semibold">{rental.rental_days || 1} day{(rental.rental_days || 1) > 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Price per Hour:</span>
-                      <span className="font-semibold text-green-600">Rs {rental.bike_price}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Status:</span>
-                      <span className={`font-semibold ${
-                        rental.status === 'pending' ? 'text-yellow-600' : 'text-green-600'
-                      }`}>
-                        {rental.status === 'pending' ? 'Pending' : 'Active'}
-                      </span>
+                      <span>Price/day</span>
+                      <span className="font-medium">Rs {rental.bike_price}</span>
                     </div>
                   </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    {rental.status === 'pending' ? (
-                      <div className="flex gap-2">
-                        <div className="bg-yellow-50 p-3 rounded-lg flex-1">
-                          <p className="text-sm text-yellow-800">
-                            <span className="font-semibold">⏳ Pending:</span> Waiting for admin approval
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleCancelRental(rental.id)}
-                          className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 text-sm font-semibold transition"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <span className="font-semibold">📍 Remember:</span> Return the bike to the designated location when finished
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  {rental.status === 'pending' ? (
+                    <div className="flex gap-2">
+                      <p className="flex-1 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-3 py-2">
+                        Waiting for admin approval
+                      </p>
+                      <button
+                        onClick={() => handleCancelRental(rental.id)}
+                        className="px-3 py-2 bg-red-50 text-red-600 border border-red-200 text-xs rounded hover:bg-red-100 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+                      Please return the bike to the designated location when done.
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

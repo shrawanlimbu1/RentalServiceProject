@@ -95,21 +95,33 @@ export const createRental = (req, res) => {
               return res.status(400).json("Bike not available for selected dates");
             }
             
-            // Add date columns if they don't exist
-            db.query("ALTER TABLE rentals ADD COLUMN start_date DATE, ADD COLUMN end_date DATE, ADD COLUMN total_price DECIMAL(10,2)", () => {
-              // Create rental request
-              db.query(
-                "INSERT INTO rentals (user_id, bike_id, status, start_date, end_date, total_price) VALUES (?, ?, 'pending', ?, ?, ?)",
-                [user_id, bike_id, start_date, end_date, total_price],
-                (err, result) => {
-                  if (err) return res.status(500).json("Database error");
-                  return res.status(201).json({ message: "Rental request created", id: result.insertId });
-                }
-              );
-            });
+            // Create rental request
+            db.query(
+              "INSERT INTO rentals (user_id, bike_id, status, start_date, end_date, total_price) VALUES (?, ?, 'pending', ?, ?, ?)",
+              [user_id, bike_id, start_date, end_date, total_price],
+              (err, result) => {
+                if (err) return res.status(500).json("Database error: " + err.message);
+                return res.status(201).json({ message: "Rental request created", id: result.insertId });
+              }
+            );
           });
         }
       );
+    });
+  });
+};
+
+// Reject rental (admin only)
+export const rejectRental = (req, res) => {
+  const { id } = req.params;
+
+  db.query("SELECT bike_id FROM rentals WHERE id = ?", [id], (err, rentalData) => {
+    if (err) return res.status(500).json("Database error");
+    if (!rentalData.length) return res.status(404).json("Rental not found");
+
+    db.query("UPDATE rentals SET status = 'returned' WHERE id = ?", [id], (err) => {
+      if (err) return res.status(500).json("Database error");
+      return res.status(200).json("Rental rejected");
     });
   });
 };

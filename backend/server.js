@@ -7,6 +7,7 @@ import bikeRoutes from "./routes/bikes.js";
 import userRoutes from "./routes/users.js";
 import rentalRoutes from "./routes/rentals.js";
 import recommendationRoutes from "./routes/recommendations.js";
+import favouriteRoutes from "./routes/favourites.js";
 
 // Load environment variables
 dotenv.config();
@@ -16,14 +17,15 @@ const app = express();
 
 // ✅ CORS FIX (VERY IMPORTANT)
 app.use(cors({
-  origin: "http://localhost:5173", // your frontend
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
 // Parse JSON bodies with increased limit for base64 images
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve uploaded files
 app.use("/uploads", express.static("uploads"));
@@ -34,6 +36,7 @@ app.use("/api/bikes", bikeRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rentals", rentalRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/favourites", favouriteRoutes);
 
 // Port
 const PORT = process.env.PORT || 5000;
